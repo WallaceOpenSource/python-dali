@@ -9,7 +9,6 @@ from dali.exceptions import NoFreeAddress
 from dali.exceptions import NotConnected
 from dali.exceptions import ProgramShortAddressFailure
 import dali.gear.general as gear
-import sets
 import time
 
 
@@ -33,7 +32,7 @@ class Device(object):
 class Bus(object):
     """A DALI bus."""
 
-    _all_addresses = sets.ImmutableSet(range(64))
+    _all_addresses = set(range(64))
 
     def __init__(self, name=None, interface=None):
         self._devices = {}
@@ -59,7 +58,7 @@ class Bus(object):
 
     def unused_addresses(self):
         """Return all short addresses that are not in use."""
-        used_addresses = sets.ImmutableSet(self._devices.keys())
+        used_addresses = set(self._devices.keys())
         return list(self._all_addresses - used_addresses)
 
     def scan(self):
