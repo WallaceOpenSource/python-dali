@@ -29,6 +29,7 @@ class _GearCommand(command.Command):
                 return r
         return UnknownGearCommand(f)
 
+
 class UnknownGearCommand(_GearCommand):
     """An unknown command addressed to control gear.
     """
@@ -36,9 +37,11 @@ class UnknownGearCommand(_GearCommand):
     def from_frame(cls, f, devicetype=0):
         return
 
+
 ###############################################################################
 # Commands from Table 15 start here
 ###############################################################################
+
 
 class _StandardCommand(_GearCommand):
     """A standard command as defined in Table 15 of IEC 62386-102
@@ -559,6 +562,16 @@ class EnableWriteMemory(_StandardCommand):
     NB there is no command to explicitly disable memory write access;
     any command that is not directly involved with writing to memory
     banks will set writeEnableState to DISABLED.
+
+    The commands that do not set writeEnableState to DISABLED are:
+     - WriteMemoryLocation
+     - WriteMemoryLocationNoReply
+     - DTR0
+     - DTR1
+     - DTR2
+     - QueryContentDTR0
+     - QueryContentDTR1
+     - QueryContentDTR2
     """
     _cmdval = 0x81
     sendtwice = True
@@ -641,9 +654,10 @@ class QueryVersionNumber(_StandardCommand):
     """Ask for the version number of the IEC standard document met by the
     software and hardware of the ballast.  The high four bits of the
     answer represent the version number of the standard.  IEC-60929 is
-    version number 0.
+    version number 0; the 2009 version of IEC-62386 is version number 1.
 
-    The answer shall be the content of memory bank 0 location 0x16.
+    As of the 2014 version of IEC-62386, the answer shall be the
+    content of memory bank 0 location 0x16.
     """
     _cmdval = 0x97
     response = command.NumericResponse
@@ -960,6 +974,7 @@ class QueryExtendedVersionNumberMixin:
     _cmdval = 0xff
     response = command.NumericResponse
 
+
 class QueryExtendedVersionNumber(QueryExtendedVersionNumberMixin,
                                  _StandardCommand):
     """Query Extended Version Number
@@ -968,9 +983,11 @@ class QueryExtendedVersionNumber(QueryExtendedVersionNumberMixin,
     """
     pass
 
+
 ###############################################################################
 # Commands from Table 16 start here
 ###############################################################################
+
 
 class _SpecialCommand(_GearCommand):
     """A special command as defined in Table 16 of IEC 62386-102.
@@ -1171,6 +1188,7 @@ class SearchaddrH(_SpecialCommand):
     _cmdval = 0xb1
     _hasparam = True
 
+
 SetSearchAddrH = SearchaddrH
 
 
@@ -1179,6 +1197,7 @@ class SearchaddrM(_SpecialCommand):
     _cmdval = 0xb3
     _hasparam = True
 
+
 SetSearchAddrM = SearchaddrM
 
 
@@ -1186,6 +1205,7 @@ class SearchaddrL(_SpecialCommand):
     """Set the low 8 bits of the search address."""
     _cmdval = 0xb5
     _hasparam = True
+
 
 SetSearchAddrL = SearchaddrL
 

@@ -4,7 +4,6 @@ from dali import address
 from dali import frame
 from dali.exceptions import MissingResponse
 from dali.exceptions import ResponseError
-import warnings
 
 
 class _CommandTracker(type):
@@ -69,6 +68,7 @@ class Response:
         except MissingResponse or ResponseError as e:
             return "{}".format(e)
 
+
 class NumericResponse(Response):
     _expected = True
 
@@ -80,6 +80,7 @@ class NumericResponse(Response):
             return "(framing error)"
         return self._value.as_integer
 
+
 class NumericResponseMask(NumericResponse):
     @property
     def value(self):
@@ -87,6 +88,7 @@ class NumericResponseMask(NumericResponse):
         if v == 255:
             return "MASK"
         return v
+
 
 class YesNoResponse(Response):
     _error_acceptable = True
@@ -188,15 +190,6 @@ class Command(metaclass=_CommandTracker):
     # foo.  This parameter is ignored for all other frame lengths.
     devicetype = 0
 
-    # devicetype used to be called "_devicetype".  This property is
-    # here for compatibility with older code that relied on this.  It
-    # will be removed in a future release.
-    @property
-    def _devicetype(self):
-        warnings.warn("'_devicetype' has been renamed to 'devicetype'",
-                      DeprecationWarning, stacklevel=2)
-        return self.devicetype
-
     def __init__(self, f):
         assert isinstance(f, frame.ForwardFrame)
         self._data = f
@@ -242,32 +235,9 @@ class Command(metaclass=_CommandTracker):
         return self._data
 
     @property
-    def is_config(self):
-        """Is this a configuration command?  (Does it need repeating to
-        take effect?)
-
-        Use of this property is deprecated: access the "sendtwice"
-        attribute directly.
-        """
-        warnings.warn("Access 'sendtwice' directly instead of using 'is_config'",
-                      DeprecationWarning, stacklevel=2)
-        return self.sendtwice
-
-    @property
     def is_query(self):
         """Does this command return a result?"""
         return self.response is not None
-
-    @property
-    def _response(self):
-        """If this command returns a result, use this class for the response.
-
-        This property is provided for compatibility with old code.
-        Access the "response" attribute directly.
-        """
-        warnings.warn("Access 'response' directly instead of using '_response'",
-                      DeprecationWarning, stacklevel=2)
-        return self.response
 
     @staticmethod
     def _check_destination(destination):
@@ -291,5 +261,6 @@ class Command(metaclass=_CommandTracker):
         joined = ":".join(
             "{:02x}".format(c) for c in self._data.as_byte_sequence)
         return "({0}){1}".format(type(self), joined)
+
 
 from_frame = Command.from_frame

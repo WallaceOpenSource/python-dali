@@ -1,7 +1,4 @@
-import struct
-
-_bad_init_data = TypeError(
-    "data must be a sequence of integers all in the range 0..255 or an integer")
+import warnings
 
 
 class Frame:
@@ -13,7 +10,7 @@ class Frame:
     Instances of this object are mutable.
     """
 
-    def __init__(self, bits, data=0):
+    def __init__(self, bits, data=0, new_exceptions=True):
         """Initialise a Frame with the supplied number of data bits.
 
         :parameter bits: the number of data bits in the Frame
@@ -30,14 +27,21 @@ class Frame:
         if isinstance(data, int):
             self._data = data
         else:
-            d = 0
-            for b in data:
-                if not isinstance(b, int):
-                    raise _bad_init_data
-                if b < 0 or b > 255:
-                    raise _bad_init_data
-                d = (d << 8) | b
-            self._data = d
+            if new_exceptions:
+                self._data = int.from_bytes(data, 'big')
+            else:
+                warnings.warn("Frame() will raise ValueError in the future "
+                              "when an invalid initialisation sequence is "
+                              "passed, instead of TypeError. Passing "
+                              "new_exceptions=False to Frame() will not be "
+                              "possible in the next release.",
+                              DeprecationWarning, stacklevel=2)
+                try:
+                    self._data = int.from_bytes(data, 'big')
+                except ValueError:
+                    raise TypeError(
+                        "data must be a sequence of integers all in the "
+                        "range 0..255 or an integer")
         if self._data < 0:
             raise ValueError(
                 "Initial data must not be negative")
@@ -57,13 +61,13 @@ class Frame:
     def __eq__(self, other):
         try:
             return self._bits == other._bits and self._data == other._data
-        except:
+        except Exception:
             return False
 
     def __ne__(self, other):
         try:
             return self._bits != other._bits or self._data != other._data
-        except:
+        except Exception:
             return True
 
     def _readslice(self, key):
@@ -151,7 +155,7 @@ class Frame:
         try:
             return Frame(self._bits + other._bits,
                          self._data << other._bits | other._data)
-        except:
+        except Exception:
             raise TypeError("Frame can only be added to another Frame")
 
     @property
@@ -169,15 +173,7 @@ class Frame:
         long, the first element in the sequence contains fewer than 8
         bits.
         """
-        remaining = len(self)
-        l = []
-        d = self._data
-        while remaining > 0:
-            l.append(d & 0xff)
-            d = d >> 8
-            remaining = remaining - 8
-        l.reverse()
-        return l
+        return list(self.pack)
 
     @property
     def pack(self):
@@ -186,23 +182,32 @@ class Frame:
         If the frame is not an exact multiple of 8 bits long, the
         first byte in the string will contain fewer than 8 bits.
         """
-        s = self.as_byte_sequence
-        return struct.pack("B" * len(s), *s)
+        return self._data.to_bytes(
+            (len(self) // 8) + (1 if len(self) % 8 else 0),
+            'big')
 
-    def pack_len(self, l):
+    def pack_len(self, l, new_exceptions=True):
         """The contents of the frame represented as a fixed length byte string.
 
         The least significant bit of the frame is aligned to the end
         of the byte string.  The start of the byte string is padded with zeroes.
 
-        If the frame will not fit in the byte string, raises ValueError.
+        If the frame will not fit in the byte string, raises
+        ValueError (with new_exceptions=False) or OverflowError (with
+        new_exceptions=True).
         """
-        s = self.as_byte_sequence
-        if len(s) > l:
-            raise ValueError("Frame length {} will not fit in {} bytes".format(
-                len(self), l))
-        s = [0] * (l - len(s)) + s
-        return struct.pack("B" * l, *s)
+        if new_exceptions:
+            return self._data.to_bytes(l, 'big')
+        warnings.warn("Frame.pack_len() will raise OverflowError in the "
+                      "future when an invalid length is passed, instead of "
+                      "ValueError. Passing new_exceptions=False will not be "
+                      "possible in the next release.",
+                      DeprecationWarning, stacklevel=2)
+        try:
+            return self._data.to_bytes(l, 'big')
+        except OverflowError:
+            raise ValueError(
+                f"Frame length {len(self)} will not fit in {l} bytes")
 
     def __str__(self):
         return "{}({},{})".format(self.__class__.__name__, len(self),
@@ -246,6 +251,7 @@ class BackwardFrame(Frame):
 
     def __str__(self):
         return "{}({})".format(self.__class__.__name__, self._data)
+
 
 class BackwardFrameError(BackwardFrame):
     """A response to a forward frame received with a framing error.

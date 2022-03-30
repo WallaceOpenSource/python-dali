@@ -1,9 +1,4 @@
-import os
-import sys
 import unittest
-
-
-import dali
 from dali import frame
 
 
@@ -22,6 +17,23 @@ class TestFrame(unittest.TestCase):
 
     def test_frame_init_data(self):
         """frames can be initialised with integer or iterable data"""
+        # In release 0.9, Frame defaults to new_exceptions=True
+        with self.assertWarns(DeprecationWarning):
+            self.assertEqual(
+                frame.Frame(16, 0xffff),
+                frame.Frame(16, (0xff, 0xff), new_exceptions=False)
+            )
+            self.assertNotEqual(
+                frame.Frame(16, 0xffff),
+                frame.Frame(16, (0xff, 0xfe), new_exceptions=False)
+            )
+            self.assertEqual(
+                frame.Frame(16, 0xffff),
+                frame.Frame(16, (0, 0, 0xff, 0xff), new_exceptions=False)
+            )
+            self.assertRaises(TypeError, frame.Frame, 24, (0x100, 0xff),
+                              new_exceptions=False)
+
         self.assertEqual(
             frame.Frame(16, 0xffff),
             frame.Frame(16, (0xff, 0xff))
@@ -34,6 +46,11 @@ class TestFrame(unittest.TestCase):
             frame.Frame(16, 0xffff),
             frame.Frame(16, (0, 0, 0xff, 0xff))
         )
+        self.assertRaises(ValueError, frame.Frame, 24, (0x100, 0xff))
+
+        # In release 0.10 (or whatever we decide to call it), passing
+        # any value for new_exceptions will cause a warning, and in
+        # the release after that new_exceptions will be removed
 
     def test_comparisons(self):
         """frame comparisons"""
@@ -135,14 +152,35 @@ class TestFrame(unittest.TestCase):
 
     def test_pack_len(self):
         """frame packing with length returns expected byte strings"""
+        # In release 0.9, pack_len defaults to new_exceptions=True
+        with self.assertWarns(DeprecationWarning):
+            f = frame.Frame(28, 0x2345678)
+            self.assertRaises(ValueError, lambda: f.pack_len(
+                3, new_exceptions=False))
+            self.assertEqual(f.pack_len(4, new_exceptions=False),
+                             b'\x02\x34\x56\x78')
+            self.assertEqual(f.pack_len(5, new_exceptions=False),
+                             b'\x00\x02\x34\x56\x78')
+            f = frame.Frame(16, 0xaa55)
+            self.assertRaises(ValueError, lambda: f.pack_len(
+                0, new_exceptions=False))
+            self.assertEqual(f.pack_len(2, new_exceptions=False),
+                             b'\xaa\x55')
+            self.assertEqual(f.pack_len(4, new_exceptions=False),
+                             b'\x00\x00\xaa\x55')
+
         f = frame.Frame(28, 0x2345678)
-        self.assertRaises(ValueError, lambda: f.pack_len(3))
+        self.assertRaises(OverflowError, lambda: f.pack_len(3))
         self.assertEqual(f.pack_len(4), b'\x02\x34\x56\x78')
         self.assertEqual(f.pack_len(5), b'\x00\x02\x34\x56\x78')
         f = frame.Frame(16, 0xaa55)
-        self.assertRaises(ValueError, lambda: f.pack_len(0))
+        self.assertRaises(OverflowError, lambda: f.pack_len(0))
         self.assertEqual(f.pack_len(2), b'\xaa\x55')
         self.assertEqual(f.pack_len(4), b'\x00\x00\xaa\x55')
+
+        # In release 0.10 (or whatever we decide to call it), passing
+        # any value for new_exceptions will cause a warning, and in
+        # the release after that new_exceptions will be removed
 
     def test_contains(self):
         """frame __contains__ method works as expected"""

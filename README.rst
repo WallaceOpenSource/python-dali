@@ -28,25 +28,40 @@ fairly expensive to obtain.  The library is designed to be extensible;
 adding support for the other parts ought to be easy and
 self-contained.
 
+The ``dali.memory`` module supports the extended memory bank
+specifications created and maintained by the `Digital Illumination
+Interface Alliance`_:
+
+- DiiA DALI Part 251 — Memory Bank 1 Extension
+- DiiA DALI Part 252 — Energy Reporting
+- DiiA DALI Part 253 — Diagnostics & Maintenance
+
 Python versions supported
 -------------------------
 
 This library currently requires Python version 3.6 or later.
+
+Stability
+---------
+
+Some of the code in this project is experimental and its API is
+subject to change. Modules with stable APIs are noted below.
 
 Library structure
 -----------------
 
 - ``dali``
 
-  - ``address`` - Device addressing
+  - ``address`` - Device addressing; stable for gear, not stable for devices
 
-  - ``command`` - Command registry, interface to command decoding
+  - ``command`` - Command registry, interface to command decoding; stable
 
-  - ``device`` - DALI control devices as defined in IEC 62386
+  - ``device`` - DALI control devices as defined in IEC 62386; not stable
 
     - ``general`` - Commands and events from part 103
 
-  - ``driver`` - Objects to communicate with physical DALI gateways or services
+  - ``driver`` - Objects to communicate with physical DALI gateways or
+    services; not stable
 
     - ``base`` - General driver contracts
 
@@ -60,9 +75,9 @@ Library structure
 
   - ``exceptions`` - DALI related exceptions
 
-  - ``frame`` - Forward and backward frames
+  - ``frame`` - Forward and backward frames; stable
 
-  - ``gear`` - DALI control gear as defined in IEC 62386
+  - ``gear`` - DALI control gear as defined in IEC 62386; stable
 
     - ``emergency`` - Commands from part 202
 
@@ -72,7 +87,9 @@ Library structure
 
     - ``led`` - Commands from part 207
 
-  - ``sequences`` - packaged sequences of commands
+  - ``memory`` - access to memory banks; not stable
+
+  - ``sequences`` - packaged sequences of commands; stable
 
 
 Contributors
@@ -92,11 +109,14 @@ Contributors
 
 - Hans Baumgartner
 
+- Ferdinand Keil
+
 
 Copyright
 ---------
 
-python-dali is Copyright (C) 2013–2020 Stephen Early <steve@assorted.org.uk>
+python-dali is Copyright (C) 2013–2021 Stephen Early <steve@assorted.org.uk>
+and other contributors.
 
 It is distributed under the terms of the GNU Lesser General Public
 License as published by the Free Software Foundation, either version 3
@@ -112,3 +132,4 @@ License and GNU General Public License along with this program.  If
 not, see `this link`_.
 
 .. _this link: https://www.gnu.org/licenses/
+.. _Digital Illumination Interface Alliance: https://www.dali-alliance.org/dali/data.html
